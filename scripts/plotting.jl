@@ -89,15 +89,24 @@ example_plot(
     ymax = .9
     )
 
-many_simulations_plot(
+appendix1 = many_simulations_plot(
+    100, # N simulations
+    0.0, #sigma
+    0.7, #lambda
+    get_simple_environment(6.0),
+    (1200,1000), # size
+    100, # n timesteps per simulation
+    (10,10)
+    )
+savefig(appendix1, "plots/100_standard_DBM6_shortterm.png")
+
+appendix2 = many_simulations_plot(
     100, # N simulations
     0.0, #sigma
     0.7, #lambda
     get_simple_environment(3.0),
     (1200,1000), # size
-    100, # n timesteps per simulation
+    10000, # n timesteps per simulation
     (10,10)
     )
-
-
-
+savefig(appendix1, "plots/100_standard_DBM3_longterm.png")
