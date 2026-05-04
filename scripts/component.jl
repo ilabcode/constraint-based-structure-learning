@@ -42,6 +42,13 @@ function get_component_theta(component::Component)
     return (mean, sd)
 end
 
+function g(observation::Float64, component::Component, lambda::Float64)
+    θ = get_component_theta(component)
+    τ = 1.0 / (θ[2]^2) # converting from SD to precision
+    μ = θ[1]
+    return 2.0 / pi * atan(exp(lambda) / ((observation-μ)^2 * τ))
+end
+
 ######################
 ## UPDATE FUNCTIONS ##
 ######################
@@ -58,7 +65,6 @@ function update_component!(component::Component, observation::Float64, activity_
     a = activity_level
     
     if component.new
-        component.weight = a
         component.new = false
     else
         ### Component level ###
@@ -86,10 +92,10 @@ function update_component!(component::Component, observation::Float64, activity_
         θ = get_component_theta(component)
         component.theta = θ
 
-        τ = 1.0 / (θ[2]^2) # converting from SD to precision
-        μ = θ[1]
-        g = 2.0 / pi * atan(exp(λ) / ((observation-μ)^2 * τ))
-        component.weight += g * (a - component.weight)
+        # τ = 1.0 / (θ[2]^2) # converting from SD to precision
+        # μ = θ[1]
+        # g = 2.0 / pi * atan(exp(λ) / ((observation-μ)^2 * τ))
+        # component.weight += g * (a - component.weight)
     end
 
     return nothing

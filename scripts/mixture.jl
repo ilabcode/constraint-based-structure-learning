@@ -19,11 +19,12 @@ mutable struct MixModel
     omega::Float64
     sigma::Float64
     lambda::Float64
+    g_map::Function
 end
 
 function init_mixture_model(alpha::Float64 = 0.01, omega::Float64 = -6.0, 
-                           sigma::Float64 = 0.0, lambda::Float64 = 0.7)
-    MixModel(init_GaussianMixture(), alpha, omega, sigma, lambda)
+                           sigma::Float64 = 0.0, lambda::Float64 = 0.7, g_map::Function = (x) -> 2.0 / pi * atan(x))
+    MixModel(init_GaussianMixture(), alpha, omega, sigma, lambda, g_map)
 end
 
 #######################
@@ -50,7 +51,7 @@ function get_activity_levels(model::MixModel, observation::Float64)
             val = model.alpha * pdf(Normal(c.theta[1], c.theta[2]), o) * c.weight
         else
             τ = 1.0 / (c.theta[2]^2)
-            g = 2.0 / π * atan(exp(model.lambda) / ((o - c.theta[1])^2 * τ))
+            g = model.g_map(exp(model.lambda) / ((observation-c.theta[1])^2 * τ))
             f = pdf(Normal(c.theta[1], c.theta[2]), o) 
             val = g * f * c.weight
         end
@@ -79,6 +80,19 @@ function update_model!(model, observation)
 
     components = model.mixture.components
 
+    # Update weights
+    for i in eachindex(components)
+        component = components[i]
+        if component.new
+            component.weight = activity_levels[i]
+        else
+            τ = 1.0 / (component.theta[2]^2) # converting from SD to precision
+            μ = component.theta[1]
+            g = model.g_map(exp(model.lambda) / ((observation-μ)^2 * τ))
+            component.weight += g * (activity_levels[i] - component.weight)
+        end
+    end
+
     # Update all components
     for i in eachindex(components)
         update_component!(
@@ -89,6 +103,7 @@ function update_model!(model, observation)
             )
     end
 
+
     # Filter out dead components. Keep surviving components
     suvivors = [c.weight >= model.alpha for c in components]
     if !all(suvivors)
@@ -97,7 +112,7 @@ function update_model!(model, observation)
         model.mixture.IDs = model.mixture.IDs[filter]
     end
 
-    return nothing
+    return activity_levels
 
 end
 

@@ -1,8 +1,8 @@
 const Environment = Vector{Tuple{Float64,Float64}}
 
 function simple_simulation(environment::Environment, sigma::Float64 = 0.0, 
-                          lambda::Float64 = 0.7, n_timesteps::Int = 100)
-    model = init_mixture_model(.01, -6.0, sigma, lambda)
+                          lambda::Float64 = 0.7, n_timesteps::Int = 100, g_map::Function = (x) -> 2.0 / pi * atan(x))
+    model = init_mixture_model(.01, -6.0, sigma, lambda, g_map)
     simulate_from_model(model, environment, n_timesteps)
 end
 
